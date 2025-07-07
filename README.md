@@ -36,4 +36,13 @@ When that is done, run the main python file and then visit the html file. <br>
 
 
 ## Features
+| Feature                                                        | Description                               | Done      |
+|----------------------------------------------------------------|-------------------------------------------|-----------|
+| Being able to talk to an AI model |                                                                        | ✅        |
+| Being able to hold a conversation | This is done however there is no memory of previous conversations      | ✅        |
+| Simple webpage GUI                |                                                                        | ✅        |
+| Being able to type and talk       | You can talk to the model through the GUI                              | ✅        |
+| Being able to change model        | You can talk to a different installed model                            | ✅        |
+| Being able to download models     | You can download other models through the gui                          | ✅        |
+| Can watch AI type out the response| You can see the ai generate the text or code in chunks and update it   | ✅        |
 
