@@ -17,3 +17,23 @@ pip3 install -r requirements.txt
 <br>
 
 
+## Installation
+To install this, download github desktop and clone this repository: <br>
+```bash
+https://github.com/cassidymabeyWEX/ollama-model-gui.git
+```
+However, if you want to do it from terminal, you can run this command: <br>
+```bash
+git clone https://github.com/cassidymabeyWEX/ollama-model-gui.git
+```
+
+
+<br>
+
+## Running
+To run this program, you will have to make sure you have [downloaded it](##installation) and [installed the requirements](##requirements) <br>
+When that is done, run the main python file and then visit the html file. <br>
+
+
+## Features
+
