@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ollama Chat</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    #progress-container { display:none; margin-bottom: 12px; }
+    #progress-bar { width: 0; height: 18px; background: #2563eb; border-radius: 6px; transition: width 0.2s; }
+    #progress-bg { width: 100%; background: #e5e7eb; border-radius: 6px; height: 18px; }
+    #progress-label { font-size: 0.95em; color: #444; margin-top: 2px; }
+    pre.code-block { position: relative; background: #f3f4f6; padding: 10px; border-radius: 6px; margin: 10px 0; }
+    .copy-btn { position: absolute; top: 10px; right: 10px; background: #2563eb; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+    .copy-btn:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Ollama Chat</h1>
+    <div class="model-select">
+      <label for="model">Model:</label>
+      <select id="model"></select>
+    </div>
+    <div id="progress-container">
+      <div id="progress-bg"><div id="progress-bar"></div></div>
+      <div id="progress-label"></div>
+    </div>
+    <div id="chat-window" class="chat-window"></div>
+    <form id="chat-form">
+      <textarea id="user-input" placeholder="Type your message..." rows="3"></textarea>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+  <script>
+    function formatText(text) {
+      // Handle code blocks (```...```)
+      text = text.replace(/```([\s\S]*?)```/g, function(match, code) {
+        const codeHtml = `<pre class='code-block'><code>${escapeHtml(code)}</code><button class='copy-btn'>Copy</button></pre>`;
+        return codeHtml;
+      });
+      text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                 .replace(/__(.*?)__/g, '<u>$1</u>')
+                 .replace(/\n/g, '<br>');
+      return text;
+    }
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function(tag) {
+        const chars = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'};
+        return chars[tag] || tag;
+      });
+    }
+    function startLiveAnimation(el) {
+      let dots = 0;
+      el.textContent = '...';
+      el._interval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        el.textContent = '.'.repeat(dots) || '...';
+      }, 400);
+    }
+    function stopLiveAnimation(el) {
+      clearInterval(el._interval);
+      el._interval = null;
+    }
+    async function loadModels(selected) {
+      const res = await fetch('http://127.0.0.1:5000/listmodels');
+      console.log('Raw ollama.list() output:', res);
+      const models = await res.json();
+      const select = document.getElementById('model');
+      select.innerHTML = '';
+      (models || []).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+      const opt = document.createElement('option');
+      opt.value = '__download__';
+      opt.textContent = 'Download new one...';
+      select.appendChild(opt);
+      if (selected) select.value = selected;
+    }
+    function setProgress(percent, speed, downloaded, total) {
+      const bar = document.getElementById('progress-bar');
+      const label = document.getElementById('progress-label');
+      bar.style.width = percent + '%';
+      let mb = v => (v/1024/1024).toFixed(2);
+      label.textContent = `Downloading: ${percent}% (${mb(downloaded)}MB / ${mb(total)}MB) - ${speed > 0 ? (mb(speed) + 'MB/s') : ''}`;
+    }
+    function showProgress(show) {
+      document.getElementById('progress-container').style.display = show ? '' : 'none';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      loadModels();
+      const select = document.getElementById('model');
+      select.addEventListener('change', async function() {
+        if (select.value === '__download__') {
+          const modelName = prompt('Enter the model name to download (e.g. llama3:8b):');
+          if (modelName) {
+            showProgress(true);
+            setProgress(50, 0, 0, 1); // Show indeterminate progress
+            select.disabled = true;
+            document.getElementById('chat-form').querySelector('button').disabled = true;
+            document.getElementById('user-input').disabled = true;
+            const response = await fetch('http://127.0.0.1:5000/downloadmodel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `model=${encodeURIComponent(modelName)}`
+            });
+            const data = await response.json();
+            showProgress(false);
+            select.disabled = false;
+            document.getElementById('chat-form').querySelector('button').disabled = false;
+            document.getElementById('user-input').disabled = false;
+            if (data.status_code === 200 && data.done) {
+              await loadModels(modelName);
+              alert('Model downloaded!');
+            } else {
+              alert('Error: ' + (data.error || data.text));
+            }
+          } else {
+            await loadModels();
+          }
+        }
+      });
+    });
+    const chatWindow = document.getElementById('chat-window');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+    const modelSelect = document.getElementById('model');
+    let history = [];
+    function addMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.className = 'message ' + role;
+      msg.innerHTML = formatText(text);
+      chatWindow.appendChild(msg);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage('user', text);
+      history.push({ role: 'user', content: text });
+      userInput.value = '';
+      const anim = document.createElement('div');
+      anim.className = 'message assistant anim';
+      chatWindow.appendChild(anim);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      startLiveAnimation(anim);
+      const response = await fetch('http://127.0.0.1:5000/response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `m=${encodeURIComponent(text)}&model=${encodeURIComponent(modelSelect.value)}`
+      });
+      if (!response.body) return;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = '';
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          reply += decoder.decode(value, { stream: !done });
+          anim.innerHTML = formatText(reply);
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+      }
+      stopLiveAnimation(anim);
+      anim.classList.remove('anim');
+      anim.innerHTML = formatText(reply);
+      history.push({ role: 'assistant', content: reply });
+    });
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('copy-btn')) {
+        const code = e.target.parentElement.querySelector('code').innerText;
+        navigator.clipboard.writeText(code);
+        e.target.textContent = 'Copied!';
+        setTimeout(() => { e.target.textContent = 'Copy'; }, 1200);
+      }
+    });
+  </script>
+</body>
+</html>
