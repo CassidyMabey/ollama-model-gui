@@ -46,3 +46,8 @@ When that is done, run the main python file and then visit the html file. <br>
 | Being able to download models     | You can download other models through the gui                          | ✅        |
 | Can watch AI type out the response| You can see the ai generate the text or code in chunks and update it   | ✅        |
 
+## TODO
+| Feature                                                        | Description                               | Done      |
+|----------------------------------------------------------------|-------------------------------------------|-----------|
+| You can stop an AI model  |                                                                        | ❌        |
+
