@@ -185,7 +185,7 @@ button[type="submit"]:hover {
 }
 pre.code-block {
   background: #101117;
-  color: #fff;
+  color: #000000;
   border-radius: 7px;
   padding: 10px 10px 10px 16px;
   margin: 12px 0;
@@ -197,7 +197,7 @@ pre.code-block {
   z-index: 4;
 }
 pre.code-block code {
-  color: #fff;
+  color: #000000;
   font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
   font-size: 0.95em;
   background: none;
