@@ -50,4 +50,4 @@ When that is done, run the main python file and then visit the html file. <br>
 | Feature                                                        | Description                               | Done      |
 |----------------------------------------------------------------|-------------------------------------------|-----------|
 | You can stop an AI model                   |                                                               | ❌        |
-| The AI can see its history and refer to it |                                                               | ❌        |
+| The AI can see its history and refer to it | Only some AI models work with this chat feature               | ❗️        |
