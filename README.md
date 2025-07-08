@@ -49,5 +49,5 @@ When that is done, run the main python file and then visit the html file. <br>
 ## TODO
 | Feature                                                        | Description                               | Done      |
 |----------------------------------------------------------------|-------------------------------------------|-----------|
-| You can stop an AI model  |                                                                        | ❌        |
-
+| You can stop an AI model                   |                                                               | ❌        |
+| The AI can see its history and refer to it |                                                               | ❌        |
