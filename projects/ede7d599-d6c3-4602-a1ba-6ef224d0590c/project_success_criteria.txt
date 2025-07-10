@@ -1,0 +1,3 @@
+it works
+there is a ball which speeds up
+there are paddles which can be controlled

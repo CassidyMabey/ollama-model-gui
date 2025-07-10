@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>not a chatgpt copy</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    #progress-container { display:none; margin-bottom: 12px; }
+    #progress-bar { width: 0; height: 18px; background: #2563eb; border-radius: 6px; transition: width 0.2s; }
+    #progress-bg { width: 100%; background: #e5e7eb; border-radius: 6px; height: 18px; }
+    #progress-label { font-size: 0.95em; color: #444; margin-top: 2px; }
+    pre.code-block { position: relative; background: #f3f4f6; padding: 10px; border-radius: 6px; margin: 10px 0; }
+    .copy-btn { position: absolute; top: 10px; right: 10px; background: #2563eb; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+    .copy-btn:hover { background: #1d4ed8; }
+    .code-lang-label {
+      text-align: right;
+      font-size: 0.85em;
+      color: #888;
+      margin-top: 4px;
+      margin-bottom: -6px;
+      font-style: italic;
+    }
+    .user-icon {
+      position: absolute;
+      top: 18px;
+      right: 32px;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #353945;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .auth-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .auth-box {
+      background: #23262f;
+      border-radius: 12px;
+      padding: 28px 32px;
+      min-width: 320px;
+      box-shadow: 0 2px 16px #0008;
+    }
+    .auth-error {
+      color: #ff6b6b;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .auth-input {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #353945;
+      background: #2a2d3a;
+      color: #e5e7eb;
+    }
+    .auth-button {
+      width: 100%;
+      padding: 8px 0;
+      border-radius: 8px;
+      border: none;
+      background: #4f8cff;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .auth-switch {
+      color: #b5b8c5;
+      text-align: center;
+      margin-top: 8px;
+      cursor: pointer;
+      font-size: 0.95em;
+    }
+    #toast-card {
+      display:none;
+      position:fixed;
+      bottom:32px;
+      right:32px;
+      min-width:220px;
+      background:#23262f;
+      color:#fff;
+      border-radius:10px;
+      box-shadow:0 2px 16px #0008;
+      padding:18px 28px;
+      z-index:2000;
+      font-size:1.08em;
+      font-weight:500;
+      opacity:0.97;
+      transition:opacity 0.3s;
+      text-align:center;
+    }
+    .chat-item { position:relative; display:flex; align-items:center; }
+    .chat-delete {
+      display:none;
+      margin-left:8px;
+      color:#ff6b6b;
+      font-weight:bold;
+      font-size:1.1em;
+      background:none;
+      border:none;
+      cursor:pointer;
+      padding:0 4px;
+      border-radius:4px;
+      transition:background 0.15s;
+    }
+    .chat-item:hover .chat-delete { display:inline; background:#23262f; }
+    .chat-item .chat-delete:hover { background:#ff6b6b; color:#fff; }
+  </style>
+</head>
+<body>
+  <div style="display:flex;">
+    <div id="sidebar" style="width:180px;min-width:140px;max-width:220px;background:#20222a;border-radius:14px 0 0 14px;padding:18px 0 0 0;box-shadow:2px 0 12px #0002;display:none;flex-direction:column;align-items:center;">
+      <button id="new-convo-btn" style="width:90%;margin-bottom:12px;padding:8px 0;border-radius:8px;border:none;background:#4f8cff;color:#fff;font-weight:600;cursor:pointer;font-size:1em;">+ New Conversation</button>
+      <h3 style="color:#b5b8c5;font-size:1.1em;margin:0 0 10px 0;">Conversations</h3>
+      <div id="chat-list" style="width:100%;"></div>
+    </div>
+    <div class="container" style="flex:1;">
+      <h1>Ollama Chat</h1>
+      <div class="model-select">
+        <label for="model">Model:</label>
+        <select id="model"></select>
+      </div>
+      <div id="progress-container">
+        <div id="progress-bg"><div id="progress-bar"></div></div>
+        <div id="progress-label"></div>
+      </div>
+      <div id="chat-window" class="chat-window"></div>
+      <form id="chat-form">
+        <textarea id="user-input" placeholder="Type your message..." rows="3"></textarea>
+        <button type="submit">Send</button>
+      </form>
+      <div class="user-icon" id="userIcon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 16-4 16 0"/></svg>
+      </div>
+      <div class="auth-modal" id="authModal">
+        <div class="auth-box">
+          <h2 id="authTitle">Login</h2>
+          <div class="auth-error" id="authError"></div>
+          <input type="text" id="authUsername" class="auth-input" placeholder="Username" autocomplete="username">
+          <input type="password" id="authPassword" class="auth-input" placeholder="Password" autocomplete="current-password">
+          <button id="authActionBtn" class="auth-button">Login</button>
+          <button id="logoutBtn" class="auth-button" style="display:none;background:#ff6b6b;margin-top:8px;">Logout</button>
+          <div class="auth-switch" id="authSwitch">Don't have an account? Register</div>
+        </div>
+      </div>
+      <div id="toast-card" style="display:none; position:fixed; bottom:32px; right:32px; min-width:220px; background:#23262f; color:#fff; border-radius:10px; box-shadow:0 2px 16px #0008; padding:18px 28px; z-index:2000; font-size:1.08em; font-weight:500; opacity:0.97; transition:opacity 0.3s; text-align:center;"></div>
+    </div>
+  </div>
+  <script>
+    function formatText(text) {
+      // Replace code blocks with language annotation at the bottom
+      text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, lang, code) {
+        lang = lang ? lang : '';
+        const langLabel = lang ? `<div class='code-lang-label'>${lang}</div>` : '';
+        const codeHtml = `<pre class='code-block'><code>${escapeHtml(code)}</code><button class='copy-btn'>Copy</button>${langLabel}</pre>`;
+        return codeHtml;
+      });
+      text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                 .replace(/__(.*?)__/g, '<u>$1</u>')
+                 .replace(/\n/g, '<br>');
+      return text;
+    }
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function(tag) {
+        const chars = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'};
+        return chars[tag] || tag;
+      });
+    }
+    function startLiveAnimation(el) {
+      let dots = 0;
+      el.textContent = '...';
+      el._interval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        el.textContent = '.'.repeat(dots) || '...';
+      }, 400);
+    }
+    function stopLiveAnimation(el) {
+      clearInterval(el._interval);
+      el._interval = null;
+    }
+    async function loadModels(selected) {
+      const res = await fetch('http://127.0.0.1:5000/listmodels');
+      console.log('Raw ollama.list() output:', res);
+      const models = await res.json();
+      const select = document.getElementById('model');
+      select.innerHTML = '';
+      (models || []).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+      const opt = document.createElement('option');
+      opt.value = '__download__';
+      opt.textContent = 'Download new one...';
+      select.appendChild(opt);
+      if (selected) select.value = selected;
+    }
+    function setProgress(percent, speed, downloaded, total) {
+      const bar = document.getElementById('progress-bar');
+      const label = document.getElementById('progress-label');
+      bar.style.width = percent + '%';
+      let mb = v => (v/1024/1024).toFixed(2);
+      label.textContent = `Downloading: ${percent}% (${mb(downloaded)}MB / ${mb(total)}MB) - ${speed > 0 ? (mb(speed) + 'MB/s') : ''}`;
+    }
+    function showProgress(show) {
+      document.getElementById('progress-container').style.display = show ? '' : 'none';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      loadModels();
+      const select = document.getElementById('model');
+      select.addEventListener('change', async function() {
+        if (select.value === '__download__') {
+          const modelName = prompt('Enter the model name to download (e.g. llama3:8b):');
+          if (modelName) {
+            showProgress(true);
+            setProgress(50, 0, 0, 1); 
+            select.disabled = true;
+            document.getElementById('chat-form').querySelector('button').disabled = true;
+            document.getElementById('user-input').disabled = true;
+            const response = await fetch('http://127.0.0.1:5000/downloadmodel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `model=${encodeURIComponent(modelName)}`
+            });
+            const data = await response.json();
+            showProgress(false);
+            select.disabled = false;
+            document.getElementById('chat-form').querySelector('button').disabled = false;
+            document.getElementById('user-input').disabled = false;
+            if (data.status_code === 200 && data.done) {
+              await loadModels(modelName);
+              alert('Model downloaded!');
+            } else {
+              alert('Error: ' + (data.error || data.text));
+            }
+          } else {
+            await loadModels();
+          }
+        }
+      });
+    });
+    const chatWindow = document.getElementById('chat-window');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+    const modelSelect = document.getElementById('model');
+    let history = [];
+    function addMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.className = 'message ' + role;
+      msg.innerHTML = formatText(text);
+      chatWindow.appendChild(msg);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage('user', text);
+      history.push({ role: 'user', content: text });
+      userInput.value = '';
+      const anim = document.createElement('div');
+      anim.className = 'message assistant anim';
+      chatWindow.appendChild(anim);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      startLiveAnimation(anim);
+      if (!window.chatUUID) {
+        window.chatUUID = crypto.randomUUID();
+      }
+      const response = await fetch('http://127.0.0.1:5000/response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `m=${encodeURIComponent(text)}&model=${encodeURIComponent(modelSelect.value)}&chatUUID=${encodeURIComponent(window.chatUUID)}`
+      });
+      if (!response.body) return;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = '';
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          reply += decoder.decode(value, { stream: !done });
+        }
+        // Always show the latest reply with ... while streaming
+        if (!done) {
+          anim.innerHTML = formatText(reply) + '<span class="streaming-dots">...</span>';
+        } else {
+          anim.innerHTML = formatText(reply);
+        }
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+      stopLiveAnimation(anim);
+      anim.classList.remove('anim');
+      anim.innerHTML = formatText(reply);
+      history.push({ role: 'assistant', content: reply });
+    });
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('copy-btn')) {
+        const code = e.target.parentElement.querySelector('code').innerText;
+        navigator.clipboard.writeText(code);
+        e.target.textContent = 'Copied!';
+        setTimeout(() => { e.target.textContent = 'Copy'; }, 1200);
+      }
+    });
+    let isLogin = true;
+    const userIcon = document.getElementById('userIcon');
+    const authModal = document.getElementById('authModal');
+    const authTitle = document.getElementById('authTitle');
+    const authActionBtn = document.getElementById('authActionBtn');
+    const authSwitch = document.getElementById('authSwitch');
+    const authError = document.getElementById('authError');
+    const authUsername = document.getElementById('authUsername');
+    const authPassword = document.getElementById('authPassword');
+    const logoutBtn = document.getElementById('logoutBtn');
+    function setAuthUI(loggedIn, username) {
+      if (loggedIn) {
+        authTitle.textContent = 'Account';
+        authUsername.style.display = 'none';
+        authPassword.style.display = 'none';
+        authActionBtn.style.display = 'none';
+        authSwitch.style.display = 'none';
+        logoutBtn.style.display = 'block';
+        userIcon.title = `Logged in as ${username}`;
+      } else {
+        authTitle.textContent = isLogin ? 'Login' : 'Register';
+        authUsername.style.display = '';
+        authPassword.style.display = '';
+        authActionBtn.style.display = '';
+        authSwitch.style.display = '';
+        logoutBtn.style.display = 'none';
+        userIcon.title = '';
+      }
+    }
+    function checkLogin() {
+      const username = localStorage.getItem('username');
+      if (username) {
+        setAuthUI(true, username);
+      } else {
+        setAuthUI(false);
+      }
+    }
+    checkLogin();
+    userIcon.onclick = () => {
+      checkLogin();
+      authModal.style.display = 'flex';
+    };
+    authModal.onclick = (e) => {
+      if (e.target === authModal) authModal.style.display = 'none';
+    };
+    logoutBtn.onclick = async () => {
+      await fetch('/logout', {method:'POST'});
+      localStorage.removeItem('username');
+      setAuthUI(false);
+      authModal.style.display = 'none';
+      showToast('Logged out.', '#f59e42');
+      afterAuthStateChange();
+    };
+    authActionBtn.onclick = async () => {
+      const username = authUsername.value.trim();
+      const password = authPassword.value;
+      if (!username || !password) {
+        authError.textContent = 'Username and password required.';
+        showToast('Username and password required.', '#ff6b6b');
+        return;
+      }
+      const url = isLogin ? '/login' : '/register';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      const data = await res.json();
+      if (data.success) {
+        authModal.style.display = 'none';
+        userIcon.title = `Logged in as ${username}`;
+        authError.textContent = '';
+        localStorage.setItem('username', username);
+        setAuthUI(true, username);
+        showToast('Logged in successfully!', '#22c55e');
+        afterAuthStateChange();
+      } else {
+        authError.textContent = data.error || 'Error.';
+        let msg = data.error || 'Error.';
+        let color = '#ff6b6b';
+        if (msg.toLowerCase().includes('username already exists')) color = '#f59e42';
+        else if (msg.toLowerCase().includes('invalid credentials')) color = '#ff6b6b';
+        showToast(msg, color);
+      }
+    };
+    authSwitch.onclick = () => {
+      isLogin = !isLogin;
+      setAuthUI(false);
+      authTitle.textContent = isLogin ? 'Login' : 'Register';
+      authActionBtn.textContent = isLogin ? 'Login' : 'Register';
+      authSwitch.textContent = isLogin ? "Don't have an account? Register" : "Already have an account? Login";
+      authError.textContent = '';
+    };
+    function renderChatList(chats) {
+      const sidebar = document.getElementById('sidebar');
+      const chatList = document.getElementById('chat-list');
+      chatList.innerHTML = '';
+      if (!chats || !chats.length) {
+        chatList.innerHTML = '<div style="color:#888;text-align:center;margin-top:20px;">No conversations</div>';
+        sidebar.style.display = 'block';
+        return;
+      }
+      chats.forEach(uuid => {
+        const div = document.createElement('div');
+        div.className = 'chat-item';
+        div.style.cssText = 'padding:7px 10px;margin:4px 8px 4px 8px;border-radius:7px;cursor:pointer;color:#e5e7eb;background:#23262f;transition:background 0.2s;';
+        const label = document.createElement('span');
+        label.textContent = uuid.display;
+        label.style.flex = '1';
+        label.onclick = () => {
+          window.chatUUID = uuid;
+          loadChatHistory(uuid);
+          highlightChat(uuid);
+        };
+        const delBtn = document.createElement('button');
+        delBtn.className = 'chat-delete';
+        delBtn.textContent = '✕';
+        delBtn.onclick = async (e) => {
+          e.stopPropagation();
+          if (!confirm('Delete this conversation?')) return;
+          const username = localStorage.getItem('username');
+          if (!username) return;
+          // Remove from index.json
+          await fetch('/delete_chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, chatUUID: uuid})
+          });
+          await loadUserChats();
+          // If deleted chat is current, clear window
+          if (window.chatUUID === uuid) {
+            chatWindow.innerHTML = '';
+            window.chatUUID = null;
+          }
+        };
+        div.appendChild(label);
+        div.appendChild(delBtn);
+        chatList.appendChild(div);
+      });
+      sidebar.style.display = 'block';
+      // Highlight current chatUUID if present
+      if (window.chatUUID) highlightChat(window.chatUUID);
+    }
+    function highlightChat(uuid) {
+      const chatList = document.getElementById('chat-list');
+      Array.from(chatList.children).forEach(div => {
+        if (div.textContent === uuid) {
+          div.style.background = '#4f8cff';
+          div.style.color = '#fff';
+        } else {
+          div.style.background = '#23262f';
+          div.style.color = '#e5e7eb';
+        }
+      });
+    }
+    async function loadUserChats() {
+      const username = localStorage.getItem('username');
+      if (!username) {
+        document.getElementById('sidebar').style.display = 'none';
+        return;
+      }
+      const res = await fetch(`/user_chats?username=${encodeURIComponent(username)}`);
+      const data = await res.json();
+      renderChatList(data.chats);
+    }
+    async function loadChatHistory(uuid) {
+      // Load chat history for uuid and render in chat window
+      const res = await fetch(`/chats/${uuid.chatUUID}.json`);
+      if (!res.ok) return;
+      const history = await res.json();
+      chatWindow.innerHTML = '';
+      history.forEach(msg => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          addMessage(msg.role, msg.content);
+        }
+      });
+    }
+    // After login/logout, update chat list
+    function afterAuthStateChange() {
+      loadUserChats();
+    }
+    // Call afterAuthStateChange after login/logout
+    logoutBtn.onclick = async () => {
+      await fetch('/logout', {method:'POST'});
+      localStorage.removeItem('username');
+      setAuthUI(false);
+      authModal.style.display = 'none';
+      showToast('Logged out.', '#f59e42');
+      afterAuthStateChange();
+    };
+    authActionBtn.onclick = async () => {
+      const username = authUsername.value.trim();
+      const password = authPassword.value;
+      if (!username || !password) {
+        authError.textContent = 'Username and password required.';
+        showToast('Username and password required.', '#ff6b6b');
+        return;
+      }
+      const url = isLogin ? '/login' : '/register';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      const data = await res.json();
+      if (data.success) {
+        authModal.style.display = 'none';
+        userIcon.title = `Logged in as ${username}`;
+        authError.textContent = '';
+        localStorage.setItem('username', username);
+        setAuthUI(true, username);
+        showToast('Logged in successfully!', '#22c55e');
+        afterAuthStateChange();
+      } else {
+        authError.textContent = data.error || 'Error.';
+        let msg = data.error || 'Error.';
+        let color = '#ff6b6b';
+        if (msg.toLowerCase().includes('username already exists')) color = '#f59e42';
+        else if (msg.toLowerCase().includes('invalid credentials')) color = '#ff6b6b';
+        showToast(msg, color);
+      }
+    };
+    // On page load, show chat list if logged in
+    document.addEventListener('DOMContentLoaded', function() {
+      loadModels();
+      loadUserChats();
+    });
+    let creatingNewConvo = false;
+    document.getElementById('new-convo-btn').onclick = async function() {
+      if (creatingNewConvo) return;
+      creatingNewConvo = true;
+      chatWindow.innerHTML = '';
+      history = [];
+      const username = localStorage.getItem('username');
+      if (username) {
+        let response = await fetch(`/create_chat?username=${encodeURIComponent(username)}`);
+        let data = await response.json();
+        if (!data.success) {
+          alert('Error creating new conversation: ' + (data.error || 'Unknown error'));
+          creatingNewConvo = false;
+          return;
+        }
+        window.chatUUID = data.chatUUID;
+        await loadUserChats();
+        highlightChat(window.chatUUID);
+      }
+      creatingNewConvo = false;
+    };
+  </script>
+</body>
+</html>
