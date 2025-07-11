@@ -356,7 +356,7 @@ ALL CODE WHICH YOU PRODUCE, MAKE SURE TO TURN IT INTO BASE64 TO GO INTO THE TOOL
                         break
                     else:
                         # NOTE THIS IS ALL AI ILL TRY TO WORK OUT WHAT IT IS DOING
-
+                        # This is apparently an issue with ollama.
                         msg_content = response['message']['content'] if isinstance(response, dict) else response.message.content
                         print('DEBUG: assistant message content:', msg_content)
                         data = _json_debug.loads(msg_content)
@@ -630,10 +630,5 @@ def create_chat():
         pyjson.dump(idx, f)
     session['chatUUID'] = chat_uuid
     return {'chatUUID': chat_uuid, 'message': 'Chat created successfully'}
-
-if __name__ == '__main__':
-    app.run()
-
-
 
 app.run()

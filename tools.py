@@ -36,7 +36,6 @@ def create_file(chatUUID: str, path: str = None, content: str = '', name: str = 
     projects_dir = os.path.join(os.path.dirname(__file__), 'projects')
     project_dir = os.path.join(projects_dir, chatUUID)
     os.makedirs(project_dir, exist_ok=True)
-    # Sanitize path: reject or fix absolute paths (macOS safe)
     if path and os.path.isabs(path):
         print(f"[DEBUG][create_file] Absolute path detected, using basename: {os.path.basename(path)}")
         path = os.path.basename(path)
@@ -69,7 +68,6 @@ def create_folder(chatUUID: str, path: str = None, name: str = None) -> str:
     projects_dir = os.path.join(os.path.dirname(__file__), 'projects')
     project_dir = os.path.join(projects_dir, chatUUID)
     os.makedirs(project_dir, exist_ok=True)
-    # Sanitize path: reject or fix absolute paths
     if path and path.startswith('/'):
         path = os.path.basename(path)
     folder_path = os.path.join(project_dir, path if path else (name if name else f'folder_{random.randint(1000,9999)}'))

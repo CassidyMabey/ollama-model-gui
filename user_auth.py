@@ -12,8 +12,6 @@ users = db['users']
 
 auth_bp = Blueprint('auth', __name__)
 
-# Helper to hash passwords
-
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 

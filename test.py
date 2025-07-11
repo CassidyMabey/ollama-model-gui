@@ -8,7 +8,6 @@ import random
 import subprocess
 import base64
 
-# [Your existing tool functions remain the same]
 def is_valid_filename(filename, max_length=100):
     if not filename or len(filename) > max_length:
         return False
@@ -43,9 +42,7 @@ def create_file(chatUUID: str, path: str = None, content: str = '', name: str = 
     project_dir = os.path.join(projects_dir, chatUUID)
     os.makedirs(project_dir, exist_ok=True)
     
-    # Clean up path - remove spaces and fix common issues
     if path:
-        # Remove spaces and fix common path issues
         path = path.replace(' ', '_').replace('project_', '').replace('project/', '')
         if path.startswith('_'):
             path = path[1:]
@@ -53,7 +50,6 @@ def create_file(chatUUID: str, path: str = None, content: str = '', name: str = 
             print(f"[DEBUG][create_file] Absolute path detected, using basename: {os.path.basename(path)}")
             path = os.path.basename(path)
     
-    # Handle path/name logic with better validation
     final_filename = None
     if path and is_valid_filename(path):
         final_filename = path
@@ -62,7 +58,6 @@ def create_file(chatUUID: str, path: str = None, content: str = '', name: str = 
         if not final_filename.endswith('.py') and 'python' in (content or '').lower():
             final_filename += '.py'
     else:
-        # Use name if provided, otherwise generate
         base_name = name if name else 'file'
         if not base_name.endswith('.py'):
             base_name += '.py'
@@ -70,14 +65,12 @@ def create_file(chatUUID: str, path: str = None, content: str = '', name: str = 
     
     print(f"[DEBUG][create_file] Using filename: {final_filename}")
     
-    # If content is encoded, decode it
     if encoded and content:
         try:
             content = base64.b64decode(content).decode('utf-8')
         except Exception as e:
             print(f"[DEBUG][create_file] Error decoding base64 content: {e}")
             return f"Error decoding base64 content: {e}"
-    # If content is empty, provide a default template
     if not content or content.strip() == '':
         if final_filename.endswith('.py'):
             content = '''# Python file created by Ollama
@@ -106,16 +99,12 @@ if __name__ == "__main__":
         return f"Error creating/appending file: {e}"
 
 def append_file(chatUUID: str, filename: str, line: str) -> str:
-    """
-    Append a single line to a file. Creates the file if it doesn't exist.
-    This is more reliable than appending large chunks of content.
-    """
+
     print(f"[DEBUG][append_file] chatUUID={chatUUID}, filename={filename}, line_length={len(line) if line else 0}")
     projects_dir = os.path.join(os.path.dirname(__file__), 'projects')
     project_dir = os.path.join(projects_dir, chatUUID)
     os.makedirs(project_dir, exist_ok=True)
-    
-    # Clean up filename
+
     if filename:
         filename = filename.replace(' ', '_').replace('project_', '').replace('project/', '')
         if filename.startswith('_'):
@@ -131,7 +120,6 @@ def append_file(chatUUID: str, filename: str, line: str) -> str:
     print(f"[DEBUG][append_file] Final file_path: {file_path}")
     
     try:
-        # Ensure line ends with newline if it doesn't already
         if line and not line.endswith('\n'):
             line += '\n'
         
@@ -229,51 +217,37 @@ available_functions: Dict[str, Callable] = {
 }
 
 def robust_json_parse(text):
-    """
-    Attempt to parse JSON from text with various cleaning strategies
-    """
-    # Strategy 1: Try direct parsing
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
     
-    # Strategy 2: Extract JSON object from text
     try:
         start = text.find('{')
         end = text.rfind('}')
         if start != -1 and end != -1 and end > start:
             json_str = text[start:end+1]
             
-            # Remove trailing commas
             json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
             
-            # Handle the content array structure that Ollama sometimes returns
-            # Look for content arrays like: "content":[{"type":"string","value":"..."}]
             content_array_pattern = r'"content"\s*:\s*\[\s*\{\s*"type"\s*:\s*"string"\s*,\s*"value"\s*:\s*"([^"]*(?:\\"[^"]*)*)"\s*\}\s*\]'
             match = re.search(content_array_pattern, json_str)
             if match:
                 content_value = match.group(1)
-                # Unescape the content
                 content_value = content_value.replace('\\"', '"').replace('\\n', '\n').replace('\\\\', '\\')
-                # Replace the complex structure with simple string
                 json_str = re.sub(content_array_pattern, f'"content": "{content_value.replace(chr(92), chr(92)+chr(92)).replace(chr(34), chr(92)+chr(34)).replace(chr(10), chr(92)+chr(110))}"', json_str)
             
-            # Handle duplicate keys by removing earlier occurrences
             def remove_duplicate_keys(json_text):
-                # Find all key-value pairs
                 pattern = r'"([^"]+)"\s*:\s*("(?:[^"\\]|\\.)*"|[^,}]+)'
                 matches = list(re.finditer(pattern, json_text))
                 
-                # Track seen keys and their positions
+
                 seen_keys = {}
                 for match in matches:
                     key = match.group(1)
                     if key in seen_keys:
-                        # Remove the earlier occurrence
                         start_pos, end_pos = seen_keys[key]
                         json_text = json_text[:start_pos] + json_text[end_pos:]
-                        # Update positions for remaining matches
                         offset = end_pos - start_pos
                         for other_key, (other_start, other_end) in seen_keys.items():
                             if other_start > start_pos:
@@ -292,16 +266,11 @@ def robust_json_parse(text):
         return None
 
 def extract_and_execute_tool_call(response_content):
-    """
-    Extract and execute tool calls from Ollama response content
-    """
     print(f"DEBUG: Processing response content: {response_content[:200]}...")
     
-    # Try to parse as JSON
     data = robust_json_parse(response_content)
     
     if data and isinstance(data, dict):
-        # Check if it's a function call
         if data.get('type') == 'function' and data.get('name') in available_functions:
             function_name = data['name']
             parameters = data.get('parameters', {})
@@ -309,19 +278,16 @@ def extract_and_execute_tool_call(response_content):
             print(f"DEBUG: Found function call: {function_name}")
             print(f"DEBUG: Parameters: {parameters}")
             
-            # Handle special cases for parameters
             if 'content' in parameters and isinstance(parameters['content'], list):
                 parameters['content'] = '\n'.join([
                     x.get('value', str(x)) for x in parameters['content'] 
                     if isinstance(x, dict)
                 ])
             
-            # Remove duplicate path parameter if present
             if 'path' in parameters and isinstance(parameters['path'], str):
                 if parameters['path'].endswith('/') and 'name' in parameters:
                     parameters['path'] = parameters['name']
             
-            # Execute the function
             try:
                 function = available_functions[function_name]
                 result = function(**parameters)
@@ -336,35 +302,28 @@ def extract_and_execute_tool_call(response_content):
     return False
 
 def build_file_line_by_line(chatUUID, filename, lines):
-    """
-    Build a file by appending lines one at a time using the append_file tool
-    """
+
     print(f"[DEBUG][build_file_line_by_line] Building {filename} with {len(lines)} lines...")
     
-    # Create empty file first (optional - append_file will create if doesn't exist)
     create_file(chatUUID, path=filename, content='', name=filename)
     
-    # Append each line
     for i, line in enumerate(lines):
         result = append_file(chatUUID, filename, line)
         if "Error" in result:
             print(f"[DEBUG][build_file_line_by_line] Error on line {i+1}: {result}")
             return False
-        if i % 10 == 0:  # Progress update every 10 lines
+        if i % 10 == 0: 
             print(f"[DEBUG][build_file_line_by_line] Progress: {i+1}/{len(lines)} lines")
     
     print(f"[DEBUG][build_file_line_by_line] Successfully built {filename}")
     return True
 
 def stream_file_content(chatUUID, filename, content, chunk_size=500):
-    """
-    DEPRECATED: Use build_file_line_by_line instead for better reliability
-    """
+
     print(f"[DEBUG][stream_file_content] DEPRECATED - Use build_file_line_by_line instead")
     lines = content.split('\n')
     return build_file_line_by_line(chatUUID, filename, lines)
 
-# Main execution
 if __name__ == "__main__":
     restricted_tools = [create_file_tool]
     prompt = '''You must use the create_file tool to create a file named "spaceinvaders.py" in the project with chatUUID "ccoeb981-72da-4cfa-9224-824576eac8a7".\n\nIMPORTANT: You must provide the complete Python code for a Space Invaders game using pygame in the "content" parameter. The file should contain a fully functional game with:\n- Player spaceship that moves left/right\n- Enemies that move across the screen\n- Shooting mechanics\n- Basic collision detection\n- Score system\n\nMake sure to:\n1. Set the "name" parameter to "spaceinvaders.py" \n2. Set the "path" parameter to "spaceinvaders.py"\n3. Fill the "content" parameter with the complete Python code (not empty!)\n4. Include all necessary imports (pygame, etc.)\n\nThe content parameter must not be empty - it should contain hundreds of lines of Python code for the game.'''
@@ -378,13 +337,10 @@ if __name__ == "__main__":
     print('Raw ollama response:', response)
     msg_content = response.message.content if hasattr(response.message, 'content') else response['message']['content']
 
-    # Try robust extraction of the content field, even if JSON is malformed
     import re
     content_match = re.search(r'"content"\s*:\s*"(.*)"\s*,?\s*([\}\]])', msg_content, re.DOTALL)
     if content_match:
-        # Extract the content string, handling escaped quotes and newlines
         raw_content = content_match.group(1)
-        # Unescape common JSON escapes
         raw_content = raw_content.encode('utf-8').decode('unicode_escape')
         filename = 'spaceinvaders.py'
         chatUUID = 'ccoeb981-72da-4cfa-9224-824576eac8a7'
@@ -392,7 +348,6 @@ if __name__ == "__main__":
         create_file(chatUUID=chatUUID, path=filename, content=encoded_content, name=filename, append=False, encoded=True)
         print(f"[DEBUG] Finished building {filename} in one go using create_file and base64 encoding (robust extraction).")
     else:
-        # Fallback to old logic if extraction fails
         data = robust_json_parse(msg_content)
         if data and isinstance(data, dict):
             if data.get('type') == 'function' and data.get('name') == 'create_file':

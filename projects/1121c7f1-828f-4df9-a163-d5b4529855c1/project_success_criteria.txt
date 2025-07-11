@@ -1,0 +1,5 @@
+Two controllable paddles
+Everything speeds up over time
+Ball bounces
+Best of 5 
+If ball gets past you, you loose a point
