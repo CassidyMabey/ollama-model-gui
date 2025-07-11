@@ -1,53 +1,104 @@
 # ollama-model-gui
-This project is for my weeks work experience placement where i have explored about why Elucidat could move to a locally housed LLM for all of their AI needs. <br><br>
-I have experimented with hosting LLM's locally with Ollama and have created a link between the backend(ish) of where the LLM's are hosted and the frontend(ish) of where the website is visable and can be viewed and used. <br><br>
 
-## Requirements
-To install this, i have provided a requirements.txt which contains all of the pip modules which you will need to run this. <br>
-**On Windows** <br>
-```bash
-pip install -r requirements.txt
-```
+A webpage which allows the communication of a webpage to ollama. This project was created during a week's work experience placement, exploring the feasibility of migrating Elucidat's AI needs to a locally hosted LLM.
 
-**On Mac / Linux** 
-<br>
-```bash
-pip3 install -r requirements.txt
-```
-<br>
+I have experimented with hosting LLM's locally using Ollama and have built a bridge between the backend (where the LLMs are hosted) and the frontend (the website interface for user interaction).
 
+## Key Features & Benefits
 
-## Installation
-To install this, download github desktop and clone this repository: <br>
-```bash
-https://github.com/cassidymabeyWEX/ollama-model-gui.git
-```
-However, if you want to do it from terminal, you can run this command: <br>
-```bash
-git clone https://github.com/cassidymabeyWEX/ollama-model-gui.git
-```
+-   **Local LLM Interaction:** Facilitates communication with locally hosted Ollama models.
+-   **Web Interface:** Provides a user-friendly web interface for interacting with the LLM.
+-   **Project Management:**  Features for creating, storing, and managing projects with associated files and ideas.
+-   **Chat History:** Stores and retrieves chat history for each project.
+-   **Code Execution:** Enables running commands and scripts directly from the interface.
+-   **File Management:** Capabilities for creating, deleting, and organizing files and folders within project contexts.
 
+## Prerequisites & Dependencies
 
-<br>
+Before you begin, ensure you have met the following requirements:
 
-## Running
-To run this program, you will have to make sure you have [downloaded it](##installation) and [installed the requirements](##requirements) <br>
-When that is done, run the main python file and then visit the html file. <br>
+-   **Ollama:**  Ollama needs to be installed and running on your system.  Refer to the official Ollama documentation for installation instructions.
+-   **Python 3.6+:**  Python needs to be installed on your system.
+-   **pip:** Python package installer.
+-   **Flask:**  Python web framework.
 
+## Installation & Setup Instructions
 
-## Features
-| Feature                                                        | Description                               | Done      |
-|----------------------------------------------------------------|-------------------------------------------|-----------|
-| Being able to talk to an AI model |                                                                        | ✅        |
-| Being able to hold a conversation | This is done however there is no memory of previous conversations      | ✅        |
-| Simple webpage GUI                |                                                                        | ✅        |
-| Being able to type and talk       | You can talk to the model through the GUI                              | ✅        |
-| Being able to change model        | You can talk to a different installed model                            | ✅        |
-| Being able to download models     | You can download other models through the gui                          | ✅        |
-| Can watch AI type out the response| You can see the ai generate the text or code in chunks and update it   | ✅        |
+1.  **Clone the repository:**
 
-## TODO
-| Feature                                                        | Description                               | Done      |
-|----------------------------------------------------------------|-------------------------------------------|-----------|
-| You can stop an AI model                   |                                                               | ❌        |
-| The AI can see its history and refer to it | Only some AI models work with this chat feature               | ❗️        |
+    ```bash
+    git clone https://github.com/cassidymabeyWEX/ollama-model-gui.git
+    cd ollama-model-gui
+    ```
+
+2.  **Create a virtual environment (recommended):**
+
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate   # On Linux/macOS
+    venv\Scripts\activate.bat  # On Windows
+    ```
+
+3.  **Install the dependencies:**
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+    The `requirements.txt` file contains the following:
+
+    ```
+    Flask
+    flask_cors
+    ollama
+    ```
+
+4.  **Set up Environment Variables**
+    No environment variables required as of current version.
+
+5.  **Run the application:**
+
+    ```bash
+    python main.py
+    ```
+
+    The application will start, and you can access it through your web browser at the address provided in the console (typically `http://127.0.0.1:5000`).
+
+## Usage Examples
+
+1.  **Accessing the Web Interface:**
+
+    Open your web browser and navigate to the address provided when running `main.py` (e.g., `http://127.0.0.1:5000`).
+
+2.  **Interacting with Ollama:**
+
+    -   The interface should provide a chat box for sending prompts to the Ollama model.
+    -   Type your prompt and send it to receive a response from the model.
+
+3.  **Project Management**
+    - You can create new projects by clicking the "New Project" button.
+    - Projects are saved in the `projects/` directory.
+    - Each project has its own unique ID.
+    - Inside each project directory you will find project related files (project_idea.txt, project_success_criteria.txt, etc).
+
+## Configuration Options
+
+Currently, there are no configuration options besides ensuring Ollama is running correctly and accessible from your network.  Future versions may include options for configuring the Ollama model used, API keys, and other settings.
+
+## Contributing Guidelines
+
+Contributions are welcome!  If you would like to contribute to this project, please follow these guidelines:
+
+1.  **Fork the repository.**
+2.  **Create a new branch for your feature or bug fix.**
+3.  **Make your changes and commit them with descriptive commit messages.**
+4.  **Submit a pull request.**
+
+## License Information
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+-   This project was built using Flask and Ollama.
+-   Assets from various free sources were used for the user interface.
