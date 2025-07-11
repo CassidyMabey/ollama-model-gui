@@ -106,3 +106,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 -   This project was built using Flask and Ollama.
 -   Assets from various free sources were used for the user interface.
+
+## Note
+This was created on another account for my work experience. This is programmed by me
