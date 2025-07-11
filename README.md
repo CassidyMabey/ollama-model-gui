@@ -4,6 +4,9 @@ A webpage which allows the communication of a webpage to ollama. This project wa
 
 I have experimented with hosting LLM's locally using Ollama and have built a bridge between the backend (where the LLMs are hosted) and the frontend (the website interface for user interaction).
 
+![Will Image](./assets/will.png)
+
+
 ## Key Features & Benefits
 
 -   **Local LLM Interaction:** Facilitates communication with locally hosted Ollama models.
