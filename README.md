@@ -51,6 +51,7 @@ Before you begin, ensure you have met the following requirements:
     Flask
     flask_cors
     ollama
+    pymongo
     ```
 
 4.  **Set up Environment Variables**
@@ -83,7 +84,7 @@ Before you begin, ensure you have met the following requirements:
 
 ## Configuration Options
 
-There are no real configuration options for the entire project, instead there are optional ones such as the 
+There are no real configuration options for the entire project, instead there are optional ones such as the mongo DB api url where you can link a database to store user information. Besides this, everything else works without a config as prompts and other optimisations are already written. 
 
 ## Contributing Guidelines
 
