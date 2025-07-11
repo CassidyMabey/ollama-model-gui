@@ -83,7 +83,7 @@ Before you begin, ensure you have met the following requirements:
 
 ## Configuration Options
 
-Currently, there are no configuration options besides ensuring Ollama is running correctly and accessible from your network.  Future versions may include options for configuring the Ollama model used, API keys, and other settings.
+There are no real configuration options for the entire project, instead there are optional ones such as the 
 
 ## Contributing Guidelines
 
